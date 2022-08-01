@@ -21,9 +21,11 @@ io.on('connection', (socket) => {
 });
 
 io.on('connection', (socket) => {
-  socket.on('chat message', (msg) => {
-    io.emit('chat message', msg);
-    console.log(`message: ${msg}`);
+  socket.on('chat message', (data) => {
+    // io.emit('chat message', msg);
+    socket.broadcast.emit('other message', data);
+    socket.emit('my message', data);
+    console.log(`message to ${data.name}: ${data.msg}`);
   });
 });
 

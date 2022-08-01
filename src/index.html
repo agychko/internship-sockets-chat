@@ -285,7 +285,7 @@
                 </div>
             </div> <!-- end chat-header -->
 
-            <div class="chat-history">
+            <div class="chat-history" id="chat-history">
                 <ul id="messages">
                     <li class="clearfix">
                         <div class="message-data align-right">
@@ -348,29 +348,45 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
       var socket = io();
+      var chat = document.getElementById('chat-history');
       var messages = document.getElementById('messages');
       var form = document.getElementById('form');
       var input = document.getElementById('message-to-send');
+      const userName = prompt('Send your name:');
 
     form.addEventListener('submit', function(e) {
     e.preventDefault();
     if (input.value) {
-      socket.emit('chat message', input.value);
+      socket.emit('chat message', {
+        msg: input.value,
+        name: userName,
+    });
       input.value = '';
     }
   });
 
-  socket.on('chat message', function(msg) {
+  socket.on('my message', function(data) {
+    var item = document.createElement('li');
+    item.classList.add('clearfix');
+    item.innerHTML = `<div class="message-data align-right">
+        <span class="message-data-time">10:10 AM, Today${Date().split(' ')[4]}</span> &nbsp; &nbsp;
+        <span class="message-data-name">${data.name}</span>
+        </div>
+        <div class="message other-message float-right">${data.msg}</div>`;
+    messages.appendChild(item);
+    // window.scrollTo(0, document.body.scrollHeight);
+    chat.scrollTo(0, chat.scrollHeight);
+  });
+
+  socket.on('other message', function(data) {
     var item = document.createElement('li');
     item.innerHTML = `<div class="message-data">
-        <span class="message-data-name"> Vincent</span>
-        <span class="message-data-time">10:20 AM, Today</span>
+        <span class="message-data-name"> ${data.name}</span> 
+        <span class="message-data-time">10:20 AM, Today ${Date().split(' ')[4]}</span> &nbsp; &nbsp;
         </div>
-        <div class="message my-message">
-            ${msg}
-        </div>`;
+        <div class="message my-message">${data.msg}</div>`;
     messages.appendChild(item);
-    window.scrollTo(0, document.body.scrollHeight);
+    chat.scrollTo(0, chat.scrollHeight);
   });
   
     </script>
