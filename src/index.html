@@ -287,7 +287,7 @@
 
             <div class="chat-history" id="chat-history">
                 <ul id="messages">
-                    <li class="clearfix">
+                    <!-- <li class="clearfix">
                         <div class="message-data align-right">
                             <span class="message-data-time">10:10 AM, Today</span> &nbsp; &nbsp;
                             <span class="message-data-name">Olia</span>
@@ -328,7 +328,7 @@
                         <div class="message my-message">
                             Actually everything was fine. I'm very excited to show this to our team.
                         </div>
-                    </li>
+                    </li> -->
                 </ul>
 
             </div> <!-- end chat-history -->
@@ -369,7 +369,7 @@
     var item = document.createElement('li');
     item.classList.add('clearfix');
     item.innerHTML = `<div class="message-data align-right">
-        <span class="message-data-time">10:10 AM, Today${Date().split(' ')[4]}</span> &nbsp; &nbsp;
+        <span class="message-data-time">${new Date().toLocaleString('en-us', {hour:"2-digit", minute:"2-digit"})}, Today</span> &nbsp; &nbsp;
         <span class="message-data-name">${data.name}</span>
         </div>
         <div class="message other-message float-right">${data.msg}</div>`;
@@ -382,7 +382,7 @@
     var item = document.createElement('li');
     item.innerHTML = `<div class="message-data">
         <span class="message-data-name"> ${data.name}</span> 
-        <span class="message-data-time">10:20 AM, Today ${Date().split(' ')[4]}</span> &nbsp; &nbsp;
+        <span class="message-data-time">${new Date().toLocaleString('en-us', {hour:"2-digit", minute:"2-digit"})}, Today</span> &nbsp; &nbsp;
         </div>
         <div class="message my-message">${data.msg}</div>`;
     messages.appendChild(item);
