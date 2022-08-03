@@ -258,20 +258,20 @@
 <body>
     <div class="container clearfix">
         <div class="people-list" id="people-list">
-            <ul class="list">
-                <li class="clearfix">
+            <ul class="list" id="list">
+                <!-- <li class="clearfix">
                     <img src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/195612/chat_avatar_01.jpg" alt="avatar" />
                     <div class="about">
                         <div class="name">Vincent Porter</div>
                     </div>
-                </li>
+                </li> -->
 
-                <li class="clearfix">
+                <!-- <li class="clearfix">
                     <img src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/195612/chat_avatar_02.jpg" alt="avatar" />
                     <div class="about">
                         <div class="name">Aiden Chavez</div>
                     </div>
-                </li>
+                </li> -->
             </ul>
         </div>
 
@@ -348,11 +348,28 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
       var socket = io();
+      var peopleList = document.getElementById('list');
+    //   var peopleList = document.getElementById('people-list');
+
       var chat = document.getElementById('chat-history');
       var messages = document.getElementById('messages');
       var form = document.getElementById('form');
       var input = document.getElementById('message-to-send');
       const userName = prompt('Send your name:');
+      
+      const getAvatar = function() {
+        let size = Math.floor(Math.random()*9)+1;
+        return `https://s3-us-west-2.amazonaws.com/s.cdpn.io/195612/chat_avatar_0${size}.jpg`;
+      };
+
+      const avatar = getAvatar();
+
+    document.addEventListener('DOMContentLoaded', function(e) {
+        e.preventDefault();
+        if (userName) {
+            socket.emit('new user', {userName, avatar});
+        }
+    })
 
     form.addEventListener('submit', function(e) {
     e.preventDefault();
@@ -363,6 +380,25 @@
     });
       input.value = '';
     }
+  });
+
+  input.addEventListener('keypress', () => {
+    socket.emit('typing', userName);
+  });
+
+//   socket.on('typing', (data) => {
+//     feedback.innerHTML = `<p><i>${data.name} is typing a message...</i></p>`;
+//     messages.append(message);
+//   });
+
+  socket.on('add typing', (data) => {
+    let feedback = document.createElement('li');
+    feedback.classList.add('clearfix');
+    feedback.innerHTML = `<p><i>${data} is typing a message...</i></p>`;
+    setTimeout(() => feedback.innerHTML = '', 100);
+    messages.append(feedback);
+    
+    // feedback.fadeOut(3000, function() {$(this).remove()});
   });
 
   socket.on('my message', function(data) {
@@ -387,6 +423,28 @@
         <div class="message my-message">${data.msg}</div>`;
     messages.appendChild(item);
     chat.scrollTo(0, chat.scrollHeight);
+  });
+
+  socket.on('add user', function (user) {
+    let li = document.createElement('li');
+    li.classList.add('clearfix');
+    li.innerHTML = `<img src=${user.avatar} alt="avatar" />
+                    <div class="about">
+                        <div class="name">${user.userName}</div>
+                    </div>`;
+    peopleList.appendChild(li);
+  });
+
+  socket.on('display users', function (users) {
+    users.forEach(function (user) {
+    let li = document.createElement('li');
+    li.classList.add('clearfix');
+    li.innerHTML = `<img src=${user.avatar} alt="avatar" />
+                    <div class="about">
+                        <div class="name">${user.userName}</div>
+                    </div>`;
+    peopleList.appendChild(li);
+  });
   });
   
     </script>
