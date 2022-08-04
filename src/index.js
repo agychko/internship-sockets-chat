@@ -9,9 +9,11 @@ const { Server } = require('socket.io');
 
 const io = new Server(server);
 
+app.use(express.static(`${__dirname}/assets`));
+
 const getAvatar = () => {
-  const number = Math.floor(Math.random() * 9) + 1;
-  return `https://s3-us-west-2.amazonaws.com/s.cdpn.io/195612/chat_avatar_0${number}.jpg`;
+  const number = Math.floor(Math.random() * 10) + 1;
+  return `/images/chat_avatar_0${number}.jpg`;
 };
 
 const users = [];
@@ -26,12 +28,13 @@ io.on('connection', (socket) => {
   socket.emit('display users', users);
   socket.on('disconnect', () => {
     console.log('user disconnected');
-    console.log(onlineUsers[socket.id]);
     if (onlineUsers[socket.id]) {
       onlineUsers[socket.id].status = 'Offline';
-      // users.push(onlineUsers[socket.id]);
+      onlineUsers[socket.id].joinDate = Date.now();
       delete onlineUsers[socket.id];
       io.emit('display users', users);
+    } else {
+      socket.emit('userExists', 'Sorry, there seems to be an issue with the connection!');
     }
   });
 });
@@ -42,15 +45,23 @@ io.on('connection', (socket) => {
     if (result === -1) {
       const status = 'Online';
       const avatar = getAvatar();
-      onlineUsers[socket.id] = { userName, avatar, status };
+      const joinDate = Date.now();
+      const messageCount = 0;
+      onlineUsers[socket.id] = {
+        userName, avatar, status, joinDate, messageCount,
+      };
       users.push(onlineUsers[socket.id]);
-      // socket.broadcast.emit('get user', { userName, avatar, status });
       io.emit('display users', users);
+      socket.broadcast.emit('joining user', onlineUsers[socket.id]);
       socket.emit('get my info', onlineUsers[socket.id]);
-    } else {
+    } else if (users[result].status === 'Offline') {
       users[result].status = 'Online';
+      users[result].joinDate = Date.now();
+      onlineUsers[socket.id] = users[result];
       io.emit('display users', users);
       socket.emit('get my info', users[result]);
+    } else {
+      socket.emit('error', `${userName} username is taken! Try some other username.`);
     }
     console.log(users);
     console.log(onlineUsers);
@@ -59,9 +70,14 @@ io.on('connection', (socket) => {
     socket.broadcast.emit('add typing', data);
   });
   socket.on('chat message', (data) => {
-    // io.emit('chat message', msg);
     socket.broadcast.emit('other message', data);
-    socket.emit('my message', data);
+    if (onlineUsers[socket.id]) {
+      onlineUsers[socket.id].messageCount += 1;
+      socket.emit('my message', data);
+      socket.emit('get my info', onlineUsers[socket.id]);
+    } else {
+      socket.emit('error', 'Sorry, there seems to be an issue with the connection!');
+    }
     console.log(`message from ${data.name}: ${data.msg}`);
   });
 });

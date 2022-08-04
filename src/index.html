@@ -297,6 +297,11 @@
       var form = document.getElementById('form');
       var input = document.getElementById('message-to-send');
       const userName = prompt('Send your name:');
+
+    socket.on('error', (data) => {
+        document.write(data);
+        setTimeout(() => location.href=location.href, 3000);
+    })
       
     document.addEventListener('DOMContentLoaded', function(e) {
         e.preventDefault();
@@ -352,18 +357,10 @@
     chat.scrollTo(0, chat.scrollHeight);
   });
 
-  socket.on('get user', function (user) {
-    let li = document.createElement('li');
-    li.classList.add('clearfix');
-    li.innerHTML = `<img src=${user.avatar} alt="avatar" />
-                    <div class="about">
-                        <div class="name">${user.userName}</div>
-                        <div class="status">${user.status}</div>
-                    </div>`;
-    peopleList.appendChild(li);
+  socket.on('joining user', function (user) {
     let feedback = document.createElement('li');
     feedback.classList.add('clearfix');
-    feedback.innerHTML = `<p><b>${user.userName}</b> <i>joined to chat</i></p>`;
+    feedback.innerHTML = `<b>${user.userName}</b> <i>joined to chat</i>`;
     setTimeout(() => feedback.innerHTML = '', 3000);
     messages.append(feedback);
   });
@@ -373,20 +370,42 @@
     users.forEach(function (user) {
     let li = document.createElement('li');
     li.classList.add('clearfix');
-    li.innerHTML = `<img src=${user.avatar} alt="avatar" />
+    let status = lastOnline(user);
+    li.innerHTML = `<img src="${user.avatar}" alt="avatar" />
                     <div class="about">
                         <div class="name">${user.userName}</div>
-                        <div class="status">${user.status}</div>
+                        <div class="status">${status}</div>
                     </div>`;
     peopleList.appendChild(li);
   });
   });
 
+  const lastOnline = (data) => {
+    if (data.status === 'Offline') {
+        const time = Date.now() - data.joinDate;
+    if (time < 60000) {
+      const sec = Math.trunc(time / 1000);
+      return `online ${sec} sec ago`;
+    }
+    if (time < 3600000) {
+      const mins = Math.trunc(time / 60000);
+      return `online ${mins} mins ago`;
+    }
+    if (time < 86400000) {
+      const hours = Math.trunc(time / 3600000);
+      return `online ${hours} hours ago`;
+   }
+    const date = Date(data.joinDate);
+    return `offline since ${date.split(' ')[1]} ${date.split(' ')[2]}`;
+    }
+    return data.status;
+  };
+
   socket.on('get my info', function (user) {
     myInfo.innerHTML = `<img src=${user.avatar} alt="avatar" />
                     <div class="chat-about">
-                        <div class="chat-with"> ${user.userName}</div>
-                        <div class="chat-num-messages">${user.status}</div>
+                        <div class="chat-with"> Chat with ${user.userName}</div>
+                        <div class="chat-num-messages">already ${user.messageCount} messages</div>
                     </div>`;
   });
   
