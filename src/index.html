@@ -107,7 +107,7 @@
 
         .chat .chat-header .fa-star {
             float: right;
-            color: #d8dadf;
+            /* color: #d8dadf; */
             font-size: 20px;
             margin-top: 12px;
         }
@@ -259,76 +259,18 @@
     <div class="container clearfix">
         <div class="people-list" id="people-list">
             <ul class="list" id="list">
-                <!-- <li class="clearfix">
-                    <img src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/195612/chat_avatar_01.jpg" alt="avatar" />
-                    <div class="about">
-                        <div class="name">Vincent Porter</div>
-                    </div>
-                </li> -->
-
-                <!-- <li class="clearfix">
-                    <img src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/195612/chat_avatar_02.jpg" alt="avatar" />
-                    <div class="about">
-                        <div class="name">Aiden Chavez</div>
-                    </div>
-                </li> -->
+                
             </ul>
         </div>
 
         <div class="chat">
-            <div class="chat-header clearfix">
-                <img src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/195612/chat_avatar_01_green.jpg" alt="avatar" />
-
-                <div class="chat-about">
-                    <div class="chat-with">Chat with Vincent Porter</div>
-                    <div class="chat-num-messages">already 1 902 messages</div>
-                </div>
+            <div class="chat-header clearfix" id="my info">
+                
             </div> <!-- end chat-header -->
 
             <div class="chat-history" id="chat-history">
                 <ul id="messages">
-                    <!-- <li class="clearfix">
-                        <div class="message-data align-right">
-                            <span class="message-data-time">10:10 AM, Today</span> &nbsp; &nbsp;
-                            <span class="message-data-name">Olia</span>
-
-                        </div>
-                        <div class="message other-message float-right">
-                            Hi Vincent, how are you? How is the project coming along?
-                        </div>
-                    </li>
-
-                    <li>
-                        <div class="message-data">
-                            <span class="message-data-name">Vincent</span>
-                            <span class="message-data-time">10:12 AM, Today</span>
-                        </div>
-                        <div class="message my-message">
-                            Are we meeting today? Project has been already finished and I have results to show you.
-                        </div>
-                    </li>
-
-                    <li class="clearfix">
-                        <div class="message-data align-right">
-                            <span class="message-data-time">10:14 AM, Today</span> &nbsp; &nbsp;
-                            <span class="message-data-name">Olia</span>
-
-                        </div>
-                        <div class="message other-message float-right">
-                            Well I am not sure. The rest of the team is not here yet. Maybe in an hour or so? Have you
-                            faced any problems at the last phase of the project?
-                        </div>
-                    </li>
-
-                    <li>
-                        <div class="message-data">
-                            <span class="message-data-name"> Vincent</span>
-                            <span class="message-data-time">10:20 AM, Today</span>
-                        </div>
-                        <div class="message my-message">
-                            Actually everything was fine. I'm very excited to show this to our team.
-                        </div>
-                    </li> -->
+                    
                 </ul>
 
             </div> <!-- end chat-history -->
@@ -349,25 +291,17 @@
     <script>
       var socket = io();
       var peopleList = document.getElementById('list');
-    //   var peopleList = document.getElementById('people-list');
-
+      var myInfo = document.getElementById('my info');
       var chat = document.getElementById('chat-history');
       var messages = document.getElementById('messages');
       var form = document.getElementById('form');
       var input = document.getElementById('message-to-send');
       const userName = prompt('Send your name:');
       
-      const getAvatar = function() {
-        let size = Math.floor(Math.random()*9)+1;
-        return `https://s3-us-west-2.amazonaws.com/s.cdpn.io/195612/chat_avatar_0${size}.jpg`;
-      };
-
-      const avatar = getAvatar();
-
     document.addEventListener('DOMContentLoaded', function(e) {
         e.preventDefault();
         if (userName) {
-            socket.emit('new user', {userName, avatar});
+            socket.emit('new user', userName);
         }
     })
 
@@ -386,10 +320,6 @@
     socket.emit('typing', userName);
   });
 
-//   socket.on('typing', (data) => {
-//     feedback.innerHTML = `<p><i>${data.name} is typing a message...</i></p>`;
-//     messages.append(message);
-//   });
 
   socket.on('add typing', (data) => {
     let feedback = document.createElement('li');
@@ -397,8 +327,6 @@
     feedback.innerHTML = `<p><i>${data} is typing a message...</i></p>`;
     setTimeout(() => feedback.innerHTML = '', 100);
     messages.append(feedback);
-    
-    // feedback.fadeOut(3000, function() {$(this).remove()});
   });
 
   socket.on('my message', function(data) {
@@ -410,7 +338,6 @@
         </div>
         <div class="message other-message float-right">${data.msg}</div>`;
     messages.appendChild(item);
-    // window.scrollTo(0, document.body.scrollHeight);
     chat.scrollTo(0, chat.scrollHeight);
   });
 
@@ -425,26 +352,42 @@
     chat.scrollTo(0, chat.scrollHeight);
   });
 
-  socket.on('add user', function (user) {
+  socket.on('get user', function (user) {
     let li = document.createElement('li');
     li.classList.add('clearfix');
     li.innerHTML = `<img src=${user.avatar} alt="avatar" />
                     <div class="about">
                         <div class="name">${user.userName}</div>
+                        <div class="status">${user.status}</div>
                     </div>`;
     peopleList.appendChild(li);
+    let feedback = document.createElement('li');
+    feedback.classList.add('clearfix');
+    feedback.innerHTML = `<p><b>${user.userName}</b> <i>joined to chat</i></p>`;
+    setTimeout(() => feedback.innerHTML = '', 3000);
+    messages.append(feedback);
   });
 
   socket.on('display users', function (users) {
+    peopleList.innerHTML = '';
     users.forEach(function (user) {
     let li = document.createElement('li');
     li.classList.add('clearfix');
     li.innerHTML = `<img src=${user.avatar} alt="avatar" />
                     <div class="about">
                         <div class="name">${user.userName}</div>
+                        <div class="status">${user.status}</div>
                     </div>`;
     peopleList.appendChild(li);
   });
+  });
+
+  socket.on('get my info', function (user) {
+    myInfo.innerHTML = `<img src=${user.avatar} alt="avatar" />
+                    <div class="chat-about">
+                        <div class="chat-with"> ${user.userName}</div>
+                        <div class="chat-num-messages">${user.status}</div>
+                    </div>`;
   });
   
     </script>
