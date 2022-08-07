@@ -301,21 +301,24 @@
     socket.on('error', (data) => {
         document.write(data);
         setTimeout(() => location.href=location.href, 3000);
-    })
-      
-    document.addEventListener('DOMContentLoaded', function(e) {
-        e.preventDefault();
+    });
+
+    socket.on('user connected', function() {
         if (userName) {
             socket.emit('new user', userName);
+        } else {
+            location.href=location.href;
         }
-    })
-
+    });
+      
     form.addEventListener('submit', function(e) {
     e.preventDefault();
     if (input.value) {
       socket.emit('chat message', {
         msg: input.value,
         name: userName,
+        time: new Date().toLocaleString('en-us', { hour: '2-digit', minute: '2-digit' }),
+        date: new Date().toLocaleString('en-us', { day: 'numeric', month: 'short' }),
     });
       input.value = '';
     }
@@ -324,7 +327,6 @@
   input.addEventListener('keypress', () => {
     socket.emit('typing', userName);
   });
-
 
   socket.on('add typing', (data) => {
     let feedback = document.createElement('li');
@@ -337,8 +339,11 @@
   socket.on('my message', function(data) {
     var item = document.createElement('li');
     item.classList.add('clearfix');
+    let today = (data.date === new Date().toLocaleString('en-us', { day: 'numeric', month: 'short' })) ? 
+    'Today' : 
+    data.date;
     item.innerHTML = `<div class="message-data align-right">
-        <span class="message-data-time">${new Date().toLocaleString('en-us', {hour:"2-digit", minute:"2-digit"})}, Today</span> &nbsp; &nbsp;
+        <span class="message-data-time">${data.time}, ${today}</span> &nbsp; &nbsp;
         <span class="message-data-name">${data.name}</span>
         </div>
         <div class="message other-message float-right">${data.msg}</div>`;
@@ -348,9 +353,13 @@
 
   socket.on('other message', function(data) {
     var item = document.createElement('li');
+    item.classList.add('clearfix');
+    let today = (data.date === new Date().toLocaleString('en-us', { day: 'numeric', month: 'short' })) ? 
+    'Today' : 
+    data.date;
     item.innerHTML = `<div class="message-data">
         <span class="message-data-name"> ${data.name}</span> 
-        <span class="message-data-time">${new Date().toLocaleString('en-us', {hour:"2-digit", minute:"2-digit"})}, Today</span> &nbsp; &nbsp;
+        <span class="message-data-time">${data.time}, ${today}</span> &nbsp; &nbsp;
         </div>
         <div class="message my-message">${data.msg}</div>`;
     messages.appendChild(item);
@@ -368,15 +377,18 @@
   socket.on('display users', function (users) {
     peopleList.innerHTML = '';
     users.forEach(function (user) {
+    if (user.userName !== userName) {
     let li = document.createElement('li');
     li.classList.add('clearfix');
     let status = lastOnline(user);
-    li.innerHTML = `<img src="${user.avatar}" alt="avatar" />
+    let avatar = (user.status === 'Offline') ? 0 : 1;
+    li.innerHTML = `<img src='/images/chat_avatar_0${avatar}${user.avatar}.jpg' alt="avatar" />
                     <div class="about">
                         <div class="name">${user.userName}</div>
                         <div class="status">${status}</div>
                     </div>`;
     peopleList.appendChild(li);
+    }
   });
   });
 
@@ -401,8 +413,33 @@
     return data.status;
   };
 
+  socket.on('display messages', function (data) {
+    messages.innerHTML = '';
+    data.forEach(function (message) {
+    let today = (message.date === new Date().toLocaleString('en-us', { day: 'numeric', month: 'short' })) ? 
+    'Today' : 
+    message.date;
+    let item = document.createElement('li');
+    item.classList.add('clearfix');
+
+    item.innerHTML = (message.name === userName) ? 
+       `<div class="message-data align-right">
+        <span class="message-data-time">${message.time}, ${today}</span> &nbsp; &nbsp;
+        <span class="message-data-name">${message.name}</span>
+        </div>
+        <div class="message other-message float-right">${message.msg}</div>`:
+      `<div class="message-data">
+        <span class="message-data-name"> ${message.name}</span> 
+        <span class="message-data-time">${message.time}, ${today}</span> &nbsp; &nbsp;
+        </div>
+        <div class="message my-message">${message.msg}</div>`;
+    messages.appendChild(item);
+    chat.scrollTo(0, chat.scrollHeight);
+  });
+  });
+
   socket.on('get my info', function (user) {
-    myInfo.innerHTML = `<img src=${user.avatar} alt="avatar" />
+    myInfo.innerHTML = `<img src='/images/chat_avatar_11${user.avatar}.jpg' alt="avatar" />
                     <div class="chat-about">
                         <div class="chat-with"> Chat with ${user.userName}</div>
                         <div class="chat-num-messages">already ${user.messageCount} messages</div>
@@ -410,7 +447,5 @@
   });
   
     </script>
-
 </body>
-
 </html>
